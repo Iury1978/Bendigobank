@@ -1,6 +1,8 @@
 require 'json'
 require 'watir'
 require 'nokogiri'
+require_relative 'account'
+
 
 class BendigoBank
 
@@ -44,24 +46,39 @@ class BendigoBank
       @accounts << parse_account(account_info, acc_id)
       end
   end
+  
   def parse_account(account_info, acc_id)
-  	name = account_info.css("[data-semantic='account-name']").text
   	available_balance = account_info.css("[data-semantic = 'header-available-balance-amount']").text
   	# available_balance received data format "$99,999.00"
   	current_balance = account_info.css("[data-semantic = 'header-current-balance-amount']").text
   	# current_balance received data format "Minus − $264,321.80" or "$99,999.00"
-  	parsing_currency_and_available_balance(available_balance)
-  	parsing_current_balance(current_balance)
-  	p available_balance
-  	p current_balance
+
+  	name = account_info.css("[data-semantic='account-name']").text
+    id = acc_id
+  	currency = parsing_currency_and_available_balance(available_balance)[0]
+  	available_balance = parsing_currency_and_available_balance(available_balance)[1]
+  	current_balance = parsing_current_balance(current_balance)
+    
+    parameters = {
+    name:              name,
+    id:                id,
+    currency:          currency,
+    available_balance: available_balance,
+    current_balance:   current_balance
+    }
+
+    Account.new(parameters)
+
   end
 
-  def parsing_currency_and_available_balance(available_balance)
-
+  def parsing_currency_and_available_balance(a_balance)
+    currency =  a_balance.match?(/$/) ? "USD" : "not USD"
+    available_balance = a_balance.delete('^((0-9).)').to_f
+    [currency,available_balance]
   end
 
-  def parsing_current_balance(current_balance)
-  	
+  def parsing_current_balance(c_balance)
+    c_balance.match?(/Minus/) ? (-1) * (c_balance.delete('^((0-9).)')).to_f  : (c_balance.delete('^((0-9).)')).to_f	
   end
 end
 
