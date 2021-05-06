@@ -8,7 +8,7 @@ attr_accessor :name, :id, :currency, :available_balance, :current_balance, :tran
     @currency = parameters[:currency]
     @available_balance = parameters[:available_balance]
     @current_balance = parameters[:current_balance]
-    @transactions = []
+    @transactions = parameters[:transactions]
   end
 
   def to_json(*a)
