@@ -59,51 +59,51 @@ class BendigoBank
   end
 
   def parse_account(account_info, acc_id)
-  	available_balance = account_info.css("[data-semantic = 'header-available-balance-amount']").text
-  	current_balance = account_info.css("[data-semantic = 'header-current-balance-amount']").text
-  	account_name = account_info.css("[data-semantic='account-name']").text
+    available_balance = account_info.css("[data-semantic = 'header-available-balance-amount']").text
+    current_balance = account_info.css("[data-semantic = 'header-current-balance-amount']").text
+    account_name = account_info.css("[data-semantic='account-name']").text
 
     id = acc_id
-  	currency = parsing_currency_and_available_balance(available_balance)[0]
-  	available_balance = parsing_currency_and_available_balance(available_balance)[1]
-  	current_balance = parsing_current_balance(current_balance)
+    currency = parsing_currency_and_available_balance(available_balance)[0]
+    available_balance = parsing_currency_and_available_balance(available_balance)[1]
+    current_balance = parsing_current_balance(current_balance)
 
-  	transactions = parse_transactions(account_name)
-  	# after processing the transactions  return to the list of accounts
-  	@browser.link(text: 'Accounts').wait_until(&:present?).click
+    transactions = parse_transactions(account_name)
+    # after processing the transactions  return to the list of accounts
+    @browser.link(text: 'Accounts').wait_until(&:present?).click
     
     parameters = {
-			name:              account_name,
-			id:                id,
-			currency:          currency,
-			available_balance: available_balance,
-			current_balance:   current_balance,
-			transactions:      transactions
+      name:              account_name,
+      id:                id,
+      currency:          currency,
+      available_balance: available_balance,
+      current_balance:   current_balance,
+      transactions:      transactions
     }
     Account.new(parameters)
   end
 
   def parsing_currency_and_available_balance(a_balance)
-  	# available_balance received data format "$99,999.00"
+    # available_balance received data format "$99,999.00"
     currency =  get_currency(a_balance)
     available_balance = a_balance.delete('^((0-9).)').to_f
     [currency, available_balance]
   end
 
   def parsing_current_balance(c_balance)
-  	# current_balance received data format "Minus − $264,321.80" or "$99,999.00"
+    # current_balance received data format "Minus − $264,321.80" or "$99,999.00"
     c_balance.match?(/Minus/) ? (-1) * (c_balance.delete('^((0-9).)')).to_f  : (c_balance.delete('^((0-9).)')).to_f	
   end
 
   def get_currency(str)
-  	str.match?(/$/) ? "USD" : "not USD"
+    str.match?(/$/) ? "USD" : "not USD"
   end
 
   def parse_transactions(account_name)
-  	select_2_month_transactions
+    select_2_month_transactions
 
-  	@browser.div(class: "activity-container").wait_until(&:present?)
-  	# checking if 'No matching activity found'
+    @browser.div(class: "activity-container").wait_until(&:present?)
+    # checking if 'No matching activity found'
     checking = @browser.div(class: "full-page-message__content")
     if checking.present? 
       transactions = []
@@ -113,7 +113,7 @@ class BendigoBank
   end
 
   def select_2_month_transactions
-  	@browser.link(data_semantic: "filter").wait_until(&:present?).click
+    @browser.link(data_semantic: "filter").wait_until(&:present?).click
     @browser.link(data_semantic: "date-filter").wait_until(&:present?).click
     @browser.li(data_semantic: "custom-date-range-option").wait_until(&:present?).click
     # this part of the code to select an interval of last 7 days
@@ -166,11 +166,11 @@ class BendigoBank
       currency = currency_and_amount[0]
 
       parameters = {
-	      date:         date,
-	      description:  description,
-	      amount:       amount,
-	      currency:     currency,
-	  	  account_name: account_name
+        date:         date,
+        description:  description,
+        amount:       amount,
+        currency:     currency,
+        account_name: account_name
       }
       Transaction.new(parameters)
     end
@@ -189,33 +189,33 @@ class BendigoBank
   end
   
   def parsing_currency_and_amount(currency_amount_unclean, check_debit_or_credit)
-  	# formats - Credit of $50.00  or   $150.00 
+    # formats - Credit of $50.00  or   $150.00 
     currency =  get_currency(currency_amount_unclean)
     #  can?? regex \d.*\d
     
     amount =  case 
-					    when check_debit_or_credit == TRANSACTION_STATUS_PAID
-					      -1 * currency_amount_unclean.delete('^((0-9).)').to_f 
-					    when check_debit_or_credit == TRANSACTION_STATUS_INCOMING
-					      currency_amount_unclean.delete('^((0-9).)').to_f
-						  when check_debit_or_credit == TRANSACTION_STATUS_REJECTED
-						    TRANSACTION_STATUS_REJECTED
-					    when check_debit_or_credit == TRANSACTION_STATUS_PROCESSING
-					      TRANSACTION_STATUS_PROCESSING
-					    end
+              when check_debit_or_credit == TRANSACTION_STATUS_PAID
+                -1 * currency_amount_unclean.delete('^((0-9).)').to_f 
+              when check_debit_or_credit == TRANSACTION_STATUS_INCOMING
+                currency_amount_unclean.delete('^((0-9).)').to_f
+              when check_debit_or_credit == TRANSACTION_STATUS_REJECTED
+                TRANSACTION_STATUS_REJECTED
+              when check_debit_or_credit == TRANSACTION_STATUS_PROCESSING
+                TRANSACTION_STATUS_PROCESSING
+              end
     [currency, amount]
   end
   
   def parse_transaction_description(transaction_info)
-  	description_label = transaction_info.css('[data-semantic="label"]').map do |label|
+    description_label = transaction_info.css('[data-semantic="label"]').map do |label|
       label.text.downcase
-  	end
-  	description_detail = transaction_info.css('[data-semantic = "detail"]').map do |detail|
-  	  detail.text
-  	end
-  	des_first = description_label.shift
-  	des_second = Hash[description_label.zip(description_detail)]
-  	des_second['description'].nil? ? description = des_first : description = des_first + ' '  + des_second['description'].squeeze(' ')
+    end
+    description_detail = transaction_info.css('[data-semantic = "detail"]').map do |detail|
+      detail.text
+    end
+    des_first = description_label.shift
+    des_second = Hash[description_label.zip(description_detail)]
+    des_second['description'].nil? ? description = des_first : description = des_first + ' '  + des_second['description'].squeeze(' ')
   end
 
   def output_to_file(full_accounts_information)
