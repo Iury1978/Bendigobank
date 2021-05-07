@@ -5,7 +5,7 @@ class Transaction
   attr_accessor :date, :description, :amount, :currency, :account_name
   
   def initialize(parameters)
-  	@date = parameters[:date]
+    @date = parameters[:date]
     @description = parameters[:description]
     @amount = parameters[:amount]
     @currency = parameters[:currency]
