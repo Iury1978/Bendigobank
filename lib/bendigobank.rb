@@ -39,9 +39,7 @@ class BendigoBank
 
     full_accounts_information = { accounts: @accounts }
     # puts JSON.pretty_generate(full_accounts_information)
-    File.open("../data/bendigobank_result.txt", "w") do |info|
-      info.write(JSON.pretty_generate(full_accounts_information))
-    end
+    output_to_file(full_accounts_information)
   end
 
   def get_accounts_id
@@ -120,7 +118,7 @@ class BendigoBank
     @browser.li(data_semantic: "custom-date-range-option").wait_until(&:present?).click
     # this part of the code to select an interval of last 7 days
     # often throws out of the program at large intervals
-    
+
     # @browser.li(data_semantic: "last-7-days-option").wait_until(&:present?).click
     # @browser.button(text: "Apply Filters").click
 
@@ -219,6 +217,13 @@ class BendigoBank
   	des_second = Hash[description_label.zip(description_detail)]
   	des_second['description'].nil? ? description = des_first : description = des_first + ' '  + des_second['description'].squeeze(' ')
   end
+
+  def output_to_file(full_accounts_information)
+    File.open("../data/bendigobank_result.txt", "w") do |info|
+      info.write(JSON.pretty_generate(full_accounts_information))
+    end
+  end
+
 end
 
 BendigoBank.new.start
