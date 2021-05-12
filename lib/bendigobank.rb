@@ -226,5 +226,5 @@ class BendigoBank
 
 end
 
-BendigoBank.new.start
+# BendigoBank.new.start
 
