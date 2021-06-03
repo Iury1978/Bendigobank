@@ -28,45 +28,34 @@ class BendigoBank
     @browser.button(value: 'personal').wait_until(&:present?).click
   end
 
+  def goto_accounts_page
+    @browser.link(text: 'Accounts').wait_until(&:present?).click 
+  end
+
+  def goto_account_page(acc_id)
+    @browser.li(data_semantic_account_number: "#{acc_id}").wait_until(&:present?).click    
+  end
+
   def parse_accounts
-    get_accounts_id.map do |acc_id|
-      @browser.li(data_semantic_account_number: "#{acc_id}").wait_until(&:present?).click
-      html = @browser.div(data_semantic: "account").html
-      account_info = Nokogiri::HTML.parse(html)
+    goto_accounts_page
 
-      @accounts << parse_account(account_info, acc_id)
-    end
-
-    full_accounts_information = { accounts: @accounts }
-    # puts JSON.pretty_generate(full_accounts_information)
-    output_to_file(full_accounts_information)
-  end
-
-  def get_accounts_id
-    @browser.link(text: 'Accounts').wait_until(&:present?).click
-    # with Nokogiri
     html =  @browser.ol(class: "grouped-list__group__items").html
-    account_ids_information = Nokogiri::HTML.parse(html)
-    #  format data-semantic="account-number-value"  644 303
-    account_ids = account_ids_information.css("[data-semantic='account-number-value']").map do |acc_id|
-      acc_id.text.delete(' ')
-    end
-    # with Watir only
-    # account_ids_watir = @browser.lis(data_semantic: "account-item").map do |li|
-    #   li.attributes[:data_semantic_account_number]
-    #   end
-    # account_ids_watir.pop
-  end
+    accounts = get_accounts_id(html)
+    accounts.map do |acc_id|
+      goto_account_page(acc_id)
 
-  def parse_account(account_info, acc_id)
-    available_balance = account_info.css("[data-semantic = 'header-available-balance-amount']").text
-    current_balance = account_info.css("[data-semantic = 'header-current-balance-amount']").text
-    account_name = account_info.css("[data-semantic='account-name']").text
+      account_html = @browser.div(data_semantic: "account").html
+      full_account_info = parse_account(account_html)
 
-    id = acc_id
-    currency = parsing_currency_and_available_balance(available_balance)[0]
-    available_balance = parsing_currency_and_available_balance(available_balance)[1]
-    current_balance = parsing_current_balance(current_balance)
+      # full_account_info = [available_balance, current_balance, account_name] 
+      # parsing_currency_and_available_balance = [currency, available_balance]
+      currency = parsing_currency_and_available_balance(full_account_info[0])[0]
+      available_balance = parsing_currency_and_available_balance(full_account_info[0])[1]
+      current_balance = parsing_current_balance(full_account_info[1])
+      account_name = full_account_info[2]
+      id = acc_id
+      
+      # already working here--------------------------------------------------------
 
     transactions = parse_transactions(account_name)
     # after processing the transactions  return to the list of accounts
@@ -81,6 +70,30 @@ class BendigoBank
       transactions:      transactions
     }
     Account.new(parameters)
+      # @accounts << parse_account(account_html, acc_id)
+    end
+
+    full_accounts_information = { accounts: @accounts }
+    # puts JSON.pretty_generate(full_accounts_information)
+    output_to_file(full_accounts_information)
+  end
+  
+
+  def get_accounts_id(html)
+    account_ids_information = Nokogiri::HTML.parse(html)
+    #  format data-semantic="account-number-value"  644 303
+    account_ids = account_ids_information.css("[data-semantic='account-number-value']").map do |acc_id|
+      acc_id.text.delete(' ')
+    end
+  end
+
+  def parse_account(account_html)
+    account_info = Nokogiri::HTML.parse(account_html)
+    available_balance = account_info.css("[data-semantic = 'header-available-balance-amount']").text
+    current_balance = account_info.css("[data-semantic = 'header-current-balance-amount']").text
+    account_name = account_info.css("[data-semantic='account-name']").text
+
+    [available_balance, current_balance, account_name]   
   end
 
   def parsing_currency_and_available_balance(a_balance)
