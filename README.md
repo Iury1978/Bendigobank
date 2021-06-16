@@ -16,4 +16,12 @@ https://demo.bendigobank.com.au/banking/sign_in
 
 ## Running the app
 
-/bin bendigobank
+bin/bendigobank
+
+## Running tests
+
+bundle install
+
+bundle exec rspec spec/lib/
+
+
